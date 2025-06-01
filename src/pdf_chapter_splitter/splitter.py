@@ -256,6 +256,12 @@ class PDFChapterSplitter:
         # 章ごとのページ範囲を計算
         chapter_pages = self.find_chapter_pages(chapter_boundaries)
         
+        # もし最初の章が0ページ目以降から始まるならば前文として分割対象に追加
+        if chapter_pages and chapter_pages[0][0] > 0:
+            front_matter_end = chapter_pages[0][0] - 1
+            if front_matter_end >= 0:
+                chapter_pages.insert(0, (0, front_matter_end, "前文"))
+
         # 各章をPDFファイルに分割
         output_files = []
         for i, (start_page, end_page, title) in enumerate(chapter_pages):
