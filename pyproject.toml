@@ -1,0 +1,25 @@
+[project]
+name = "pdf-chapter-splitter"
+version = "0.1.0"
+description = "PDFファイルを章ごとに自動分割するツール"
+readme = "README.md"
+authors = [
+    { name = "Junichiro Tobe", email = "junichiro.tobe@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.2.1",
+    "pypdf2>=3.0.1",
+]
+
+[project.scripts]
+pdf-chapter-splitter = "pdf_chapter_splitter.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+]
