@@ -28,7 +28,11 @@ class PDFChapterSplitter:
         chapter_info = {}
         for chapter_num, title in toc_chapters:
             chapter_info[chapter_num] = title.strip()
-        
+
+        if not toc_chapters:
+            print("TOCが見つからなかったので改良版の章検出ロジックをフォールバックとして使用します。")
+            return self._fallback_strict_patterns(lines)
+
         # 本文で真の章開始を探す
         for i, line in enumerate(lines):
             line = line.strip()
@@ -142,6 +146,72 @@ class PDFChapterSplitter:
             return (clean_title1[:5] in clean_title2) or (clean_title2[:5] in clean_title1)
         
         return True
+
+    def _fallback_strict_patterns(self, lines: list) -> list:
+        """
+        improved_splitter で使用した厳格なパターンマッチによる fallback 検出
+        """
+        chapter_boundaries = []
+        print("\n=== fallback: 改良された章検出を実行中 ===")
+
+        strict_patterns = [
+            r'^第?\s*([0-9一二三四五六七八九十]+)\s*章\s*[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\w\s]{8,}',
+            r'^Chapter\s+([0-9IVX]+)[\s:]\s*[A-Z][A-Za-z\s]{8,}',
+            r'^([0-9]+)\.\s*[A-Z][A-Za-z\s]{8,}$',
+        ]
+
+        exclusion_patterns = [
+            r'^\s*[0-9]+\s*$',
+            r'page\s*[0-9]+',
+            r'^\s*第?\s*[0-9一二三四五六七八九十]+\s*章\s*$',
+            r'^\s*[0-9]+\s*章\s*$',
+            r'ʜʜʜʜ',
+            r'^\s*[0-9]+\s*[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]{1,10}\s*[0-9]+\s*$',
+        ]
+
+        for i, line in enumerate(lines):
+            line = line.strip()
+            if not line or len(line) < 10:
+                continue
+
+            should_exclude = False
+            for exclusion_pattern in exclusion_patterns:
+                if re.search(exclusion_pattern, line, re.IGNORECASE):
+                    should_exclude = True
+                    break
+
+            if should_exclude:
+                continue
+
+            for pattern in strict_patterns:
+                match = re.match(pattern, line, re.IGNORECASE)
+                if match:
+                    if self._is_likely_chapter_start(lines, i, line):
+                        chapter_boundaries.append((i, line))
+                        print(f"章検出: 行{i} - {line}")
+                        break
+
+        return chapter_boundaries
+
+    def _is_likely_chapter_start(self, lines: list, line_index: int, line: str) -> bool:
+        preceding_empty_lines = 0
+        for idx in range(max(0, line_index - 5), line_index):
+            if not lines[idx].strip():
+                preceding_empty_lines += 1
+
+        has_following_content = False
+        if line_index + 1 < len(lines):
+            next_line = lines[line_index + 1].strip()
+            if not next_line or (len(next_line) > 20 and not re.match(r'^[0-9]+', next_line)):
+                has_following_content = True
+
+        if len(line) < 15:
+            return False
+
+        if re.search(r'\s+[0-9]+\s*$', line):
+            return False
+
+        return preceding_empty_lines >= 1 and has_following_content
         
     def extract_text(self) -> str:
         """PDFからテキストを抽出"""
