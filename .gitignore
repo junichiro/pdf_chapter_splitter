@@ -126,3 +126,5 @@ Thumbs.db
 # Project specific
 *.pdf
 output/
+pdfs/
+

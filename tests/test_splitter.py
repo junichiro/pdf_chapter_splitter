@@ -71,7 +71,7 @@ Chapter 3 Results
         assert len(boundaries) == 0
     
     @patch('pdf_chapter_splitter.splitter.open', new_callable=mock_open)
-    @patch('PyPDF2.PdfReader')
+    @patch('pypdf.PdfReader')
     def test_extract_text(self, mock_pdf_reader, mock_file):
         """テキスト抽出のテスト"""
         # PDFReaderのモックを設定
