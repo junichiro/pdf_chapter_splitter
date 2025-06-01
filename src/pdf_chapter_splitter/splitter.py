@@ -153,6 +153,35 @@ class PDFChapterSplitter:
         
         return False
     
+    def _estimate_pages_from_line(self, line_number: int) -> int:
+        """行番号からページ数を推定"""
+        try:
+            with open(self.pdf_path, 'rb') as file:
+                reader = PdfReader(file, strict=False)
+                
+                # 最初の数ページから1ページあたりの平均行数を計算
+                total_lines = 0
+                pages_to_sample = min(5, len(reader.pages))
+                
+                for i in range(pages_to_sample):
+                    try:
+                        page_text = reader.pages[i].extract_text()
+                        page_lines = len(page_text.split('\n'))
+                        total_lines += page_lines
+                    except Exception:
+                        continue
+                
+                if total_lines > 0:
+                    avg_lines_per_page = total_lines / pages_to_sample
+                    estimated_page = int(line_number / avg_lines_per_page)
+                    return max(1, estimated_page)  # 最小1ページ
+                else:
+                    return 1
+                    
+        except Exception as e:
+            print(f"ページ推定エラー: {e}")
+            return 1
+    
     def get_page_breaks(self) -> List[int]:
         """各ページの開始行を取得"""
         try:
@@ -182,23 +211,28 @@ class PDFChapterSplitter:
         chapter_pages = []
         
         for i, (line_num, title) in enumerate(chapter_boundaries):
-            # 章の開始ページを見つける
+            # 章の開始ページを見つける（1ページ前にシフト）
             start_page = 0
             for j, page_break in enumerate(page_breaks):
                 if line_num >= page_break:
                     start_page = j
                 else:
                     break
+            # 最初の章以外は1ページ前にシフト
+            if start_page > 0:
+                start_page -= 1
             
             # 次の章の開始ページまたは最終ページを終了ページとする
             if i + 1 < len(chapter_boundaries):
                 next_line_num = chapter_boundaries[i + 1][0]
-                end_page = start_page
+                next_start_page = 0
                 for j, page_break in enumerate(page_breaks):
                     if next_line_num >= page_break:
-                        end_page = j
+                        next_start_page = j
                     else:
                         break
+                # 次の章の開始ページの前のページを現在の章の終了ページとする（1ページ前にシフト）
+                end_page = max(start_page, next_start_page - 2)
             else:
                 # 最後の章の場合は最終ページまで
                 with open(self.pdf_path, 'rb') as file:
@@ -259,17 +293,37 @@ class PDFChapterSplitter:
         # 章ごとのページ範囲を計算
         chapter_pages = self.find_chapter_pages(chapter_boundaries)
         
-        # もし最初の章が0ページ目以降から始まるならば前文として分割対象に追加
-        if chapter_pages and chapter_pages[0][0] > 0:
-            front_matter_end = chapter_pages[0][0] - 1
-            if front_matter_end >= 0:
-                chapter_pages.insert(0, (0, front_matter_end, "前文"))
+        # 最初の章より前のコンテンツを000.pdfとして追加
+        if chapter_pages:
+            first_chapter_start_page = chapter_pages[0][0]
+            if first_chapter_start_page > 0:
+                # 最初の章が0ページ目より後から始まる場合、前のページを000.pdfとする
+                front_matter_end = first_chapter_start_page - 1
+                chapter_pages.insert(0, (0, front_matter_end, "前文・目次"))
+                print(f"前文・目次を000.pdfとして保存します (ページ 1-{front_matter_end + 1})")
+            else:
+                # 最初の章が0ページから始まる場合、章の実際の開始位置をチェック
+                first_chapter_line = chapter_boundaries[0][0] if chapter_boundaries else 0
+                
+                # 最初の章が相当後の行にある場合（目次や前文がある可能性）
+                if first_chapter_line > 50:  # 50行以降に最初の章がある場合
+                    # より正確なページ分割のため、行番号からページを推定
+                    estimated_front_matter_pages = self._estimate_pages_from_line(first_chapter_line)
+                    if estimated_front_matter_pages > 0:
+                        # 最初の章の開始ページを更新
+                        chapter_pages[0] = (estimated_front_matter_pages, chapter_pages[0][1], chapter_pages[0][2])
+                        # 前文を追加
+                        chapter_pages.insert(0, (0, estimated_front_matter_pages - 1, "前文・目次"))
+                        print(f"推定：前文・目次を000.pdfとして保存します (ページ 1-{estimated_front_matter_pages})")
+        # 章が見つからない場合は既に全体が000.pdfとして処理される
 
         # 各章をPDFファイルに分割
         output_files = []
         for i, (start_page, end_page, title) in enumerate(chapter_pages):
             output_filename = f"{i:03d}.pdf"
-            print(f"章 {i:02d} (ページ {start_page+1}-{end_page+1}) を '{output_filename}' に保存中...")
+            page_count = end_page - start_page + 1
+            print(f"章 {i:02d} (ページ {start_page+1}-{end_page+1}, {page_count}ページ) を '{output_filename}' に保存中...")
+            print(f"  タイトル: {title[:60]}{'...' if len(title) > 60 else ''}")
             
             output_path = self.split_pdf_by_pages(start_page, end_page, output_filename)
             output_files.append(output_path)

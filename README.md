@@ -11,13 +11,41 @@ PDFファイルを章ごとに自動分割するPythonツールです。
 
 ## インストール
 
+### 方法1: uvを使用（推奨）
+
 ```bash
 git clone https://github.com/junichiro/pdf_chapter_splitter.git
 cd pdf_chapter_splitter
 uv sync
 ```
 
+### 方法2: pipを使用
+
+```bash
+git clone https://github.com/junichiro/pdf_chapter_splitter.git
+cd pdf_chapter_splitter
+pip install -e .
+```
+
 ## 使用方法
+
+### uvでインストールした場合
+
+```bash
+# 基本的な使用方法
+uv run pdf-chapter-splitter input.pdf
+
+# 出力ディレクトリを指定
+uv run pdf-chapter-splitter input.pdf --output-dir ./chapters
+
+# 詳細情報を表示
+uv run pdf-chapter-splitter input.pdf --verbose
+
+# ヘルプを表示
+uv run pdf-chapter-splitter --help
+```
+
+### pipでインストールした場合
 
 ```bash
 # 基本的な使用方法
@@ -28,6 +56,20 @@ pdf-chapter-splitter input.pdf --output-dir ./chapters
 
 # 詳細情報を表示
 pdf-chapter-splitter input.pdf --verbose
+
+# ヘルプを表示
+pdf-chapter-splitter --help
+```
+
+### 実行例
+
+```bash
+# プロジェクトディレクトリで実行
+cd pdf_chapter_splitter
+uv run pdf-chapter-splitter sample.pdf
+
+# 別のディレクトリから実行
+uv run --directory /path/to/pdf_chapter_splitter pdf-chapter-splitter ~/Documents/book.pdf --output-dir ~/Desktop/chapters
 ```
 
 ## 対応する章形式
@@ -56,20 +98,57 @@ pdf_chapter_splitter/
 
 ## 開発
 
-### テスト実行
-
-```bash
-uv run pytest
-```
-
 ### 開発環境セットアップ
 
 ```bash
+# プロジェクトをクローン
+git clone https://github.com/junichiro/pdf_chapter_splitter.git
+cd pdf_chapter_splitter
+
 # 開発用依存関係を含めてインストール
 uv sync --dev
+```
 
-# パッケージを開発モードでインストール
-uv pip install -e .
+### テスト実行
+
+```bash
+# ユニットテスト実行
+uv run pytest
+
+# テスト用PDFで動作確認
+uv run pdf-chapter-splitter pdfs/sample.pdf
+```
+
+### 新しいターミナルでの実行方法
+
+別のターミナルから実行する場合は以下の方法があります：
+
+#### 方法1: uvでプロジェクトディレクトリを指定
+
+```bash
+# 任意のディレクトリから実行
+uv run --directory /path/to/pdf_chapter_splitter pdf-chapter-splitter input.pdf
+```
+
+#### 方法2: システム全体にインストール
+
+```bash
+# プロジェクトディレクトリで実行
+cd /path/to/pdf_chapter_splitter
+pip install -e .
+
+# その後、任意のディレクトリから実行可能
+pdf-chapter-splitter input.pdf
+```
+
+#### 方法3: パスを通す
+
+```bash
+# ~/.bashrc や ~/.zshrc に追加
+export PATH="/path/to/pdf_chapter_splitter/.venv/bin:$PATH"
+
+# その後、任意のディレクトリから実行可能
+pdf-chapter-splitter input.pdf
 ```
 
 ## 依存関係
