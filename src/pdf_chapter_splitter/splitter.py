@@ -95,9 +95,7 @@ class PDFChapterSplitter:
             seen_chapters.add(chapter_num)
             print(f"章 {chapter_num} を検出: 行{i} - {line}")
         
-        # 章番号順にソート
-        chapter_boundaries.sort(key=lambda x: self._extract_chapter_number(x[1]))
-        
+        # 出現順に並んだまま返す
         return chapter_boundaries
     
     def _find_toc_chapters(self, lines: List[str]) -> List[Tuple[int, str]]:
