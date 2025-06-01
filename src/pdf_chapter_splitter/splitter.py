@@ -246,7 +246,10 @@ class PDFChapterSplitter:
         
         if not chapter_boundaries:
             print("章の区切りが見つかりませんでした。全体を1つのファイルとして保存します。")
-            output_path = self.split_pdf_by_pages(0, -1, "000.pdf")
+            with open(self.pdf_path, 'rb') as file:
+                reader = PdfReader(file, strict=False)
+                last_page = len(reader.pages) - 1
+            output_path = self.split_pdf_by_pages(0, last_page, "000.pdf")
             return [output_path]
         
         print(f"{len(chapter_boundaries)} 個の章が見つかりました:")
