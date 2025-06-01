@@ -29,6 +29,8 @@ class PDFChapterSplitter:
         for chapter_num, title in toc_chapters:
             chapter_info[chapter_num] = title.strip()
 
+        found_chapter_nums = set()
+
         if not toc_chapters:
             print("TOCが見つからなかったので改良版の章検出ロジックをフォールバックとして使用します。")
             return self._fallback_strict_patterns(lines)
@@ -63,6 +65,9 @@ class PDFChapterSplitter:
             # タイトルが目次のものと類似しているかチェック
             expected_title = chapter_info[chapter_num]
             if self._titles_match(chapter_title, expected_title):
+                if chapter_num in found_chapter_nums:
+                    continue
+                found_chapter_nums.add(chapter_num)
                 chapter_boundaries.append((i, line))
                 print(f"真の章検出: 行{i} - {line}")
         
@@ -152,6 +157,7 @@ class PDFChapterSplitter:
         improved_splitter で使用した厳格なパターンマッチによる fallback 検出
         """
         chapter_boundaries = []
+        found_fallback_lines = set()
         print("\n=== fallback: 改良された章検出を実行中 ===")
 
         strict_patterns = [
@@ -187,6 +193,9 @@ class PDFChapterSplitter:
                 match = re.match(pattern, line, re.IGNORECASE)
                 if match:
                     if self._is_likely_chapter_start(lines, i, line):
+                        if line in found_fallback_lines:
+                            continue
+                        found_fallback_lines.add(line)
                         chapter_boundaries.append((i, line))
                         print(f"章検出: 行{i} - {line}")
                         break
