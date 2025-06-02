@@ -10,7 +10,6 @@ requires-python = ">=3.12"
 dependencies = [
     "click>=8.2.1",
     "pypdf>=4.0.0",
-    "pikepdf>=8.0.0",
 ]
 
 [project.scripts]
