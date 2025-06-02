@@ -2,7 +2,6 @@ import re
 from pathlib import Path
 from typing import List, Tuple, Optional
 from pypdf import PdfReader, PdfWriter
-import pikepdf
 
 
 class PDFChapterSplitter:
@@ -13,39 +12,25 @@ class PDFChapterSplitter:
         
     def extract_text(self) -> str:
         """PDFからテキストを抽出"""
-        # まずpikepdfで試行（より堅牢）
+        print("pypdf でPDFを読み込み中...")
         try:
-            print("pikepdf でPDFを読み込み中...")
-            with pikepdf.Pdf.open(self.pdf_path) as pdf:
-                print(f"PDFページ数: {len(pdf.pages)}")
-                
-                # pikepdf用のテキスト抽出は限定的なのでpypdfにフォールバック
-                raise Exception("pikepdfからpypdfにフォールバック")
-                
-        except Exception as pike_error:
-            print(f"pikepdf での読み込み失敗: {pike_error}")
-            print("pypdf での読み込みを試行中...")
-            
-            # pypdfで試行
-            try:
-                with open(self.pdf_path, 'rb') as file:
-                    reader = PdfReader(file, strict=False)
-                    print(f"pypdf でPDFページ数: {len(reader.pages)}")
-                    text = ""
-                    for i, page in enumerate(reader.pages):
-                        try:
-                            page_text = page.extract_text()
-                            text += page_text + "\n"
-                            if i == 0:  # 最初のページの一部を表示
-                                print(f"最初のページのサンプル: {page_text[:200]}...")
-                        except Exception as e:
-                            print(f"警告: ページ {i+1} の読み込みでエラー: {e}")
-                            continue
-                return text
-                
-            except Exception as e:
-                print(f"pypdf でもエラー: {e}")
-                raise
+            with open(self.pdf_path, 'rb') as file:
+                reader = PdfReader(file, strict=False)
+                print(f"PDFページ数: {len(reader.pages)}")
+                text = ""
+                for i, page in enumerate(reader.pages):
+                    try:
+                        page_text = page.extract_text()
+                        text += page_text + "\n"
+                        if i == 0:  # 最初のページの一部を表示
+                            print(f"最初のページのサンプル: {page_text[:200]}...")
+                    except Exception as e:
+                        print(f"警告: ページ {i+1} の読み込みでエラー: {e}")
+                        continue
+            return text
+        except Exception as e:
+            print(f"pypdf でエラー: {e}")
+            raise
     
     def find_chapter_boundaries(self, text: str) -> List[Tuple[int, str]]:
         """章の境界を見つける（シンプルアプローチ：各章の最初の出現のみ採用）"""
