@@ -156,4 +156,3 @@ pdf-chapter-splitter input.pdf
 - Python >= 3.12
 - click >= 8.2.1 (CLI)
 - pypdf >= 4.0.0 (PDF操作)
-- pikepdf >= 8.0.0 (PDF最適化)
