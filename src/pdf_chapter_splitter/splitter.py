@@ -43,7 +43,7 @@ class PDFChapterSplitter:
         seen_chapters = set()
         
         # Chapter pattern (specialized for Japanese chapter numbers only)
-        chapter_pattern = r'^第?\s*([0-9一二三四五六七八九十]+)\s*章\s*(.*)'
+        # Chapter pattern
         
         for i, line in enumerate(lines):
             line = line.strip()
