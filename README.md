@@ -72,87 +72,87 @@ uv run pdf-chapter-splitter sample.pdf
 uv run --directory /path/to/pdf_chapter_splitter pdf-chapter-splitter ~/Documents/book.pdf --output-dir ~/Desktop/chapters
 ```
 
-## 対応する章形式
+## Supported Chapter Formats
 
-- **日本語**: 第1章、第一章、第2章、第二章...
-- **英語**: Chapter 1, Chapter 2, Chapter I, Chapter II...  
-- **番号付き**: 1. Introduction, 2. Methods, 3. Results...
-- **数字のみ**: 1 Introduction, 2 Methods...
+- **Japanese**: 第1章、第一章、第2章、第二章...
+- **English**: Chapter 1, Chapter 2, Chapter I, Chapter II...  
+- **Numbered**: 1. Introduction, 2. Methods, 3. Results...
+- **Numbers Only**: 1 Introduction, 2 Methods...
 
-## プロジェクト構成
+## Project Structure
 
 ```
 pdf_chapter_splitter/
 ├── src/
 │   └── pdf_chapter_splitter/
 │       ├── __init__.py
-│       ├── cli.py          # コマンドラインインターフェース
-│       └── splitter.py     # 章分割のメインロジック
+│       ├── cli.py          # Command line interface
+│       └── splitter.py     # Main logic for chapter splitting
 ├── tests/
 │   ├── __init__.py
-│   └── test_splitter.py    # ユニットテスト
-├── pdfs/                   # テスト用PDFファイル
-├── pyproject.toml          # プロジェクト設定
+│   └── test_splitter.py    # Unit tests
+├── pdfs/                   # Test PDF files
+├── pyproject.toml          # Project configuration
 └── README.md
 ```
 
-## 開発
+## Development
 
-### 開発環境セットアップ
+### Development Environment Setup
 
 ```bash
-# プロジェクトをクローン
+# Clone the project
 git clone https://github.com/junichiro/pdf_chapter_splitter.git
 cd pdf_chapter_splitter
 
-# 開発用依存関係を含めてインストール
+# Install including development dependencies
 uv sync --dev
 ```
 
-### テスト実行
+### Running Tests
 
 ```bash
-# ユニットテスト実行
+# Run unit tests
 uv run pytest
 
-# テスト用PDFで動作確認
+# Verify operation with test PDF
 uv run pdf-chapter-splitter pdfs/sample.pdf
 ```
 
-### 新しいターミナルでの実行方法
+### How to Run from New Terminal
 
-別のターミナルから実行する場合は以下の方法があります：
+When running from a different terminal, you have the following options:
 
-#### 方法1: uvでプロジェクトディレクトリを指定
+#### Method 1: Specify project directory with uv
 
 ```bash
-# 任意のディレクトリから実行
+# Execute from any directory
 uv run --directory /path/to/pdf_chapter_splitter pdf-chapter-splitter input.pdf
 ```
 
-#### 方法2: システム全体にインストール
+#### Method 2: Install system-wide
 
 ```bash
-# プロジェクトディレクトリで実行
+# Execute in project directory
 cd /path/to/pdf_chapter_splitter
 pip install -e .
 
-# その後、任意のディレクトリから実行可能
+# Then executable from any directory
 pdf-chapter-splitter input.pdf
 ```
 
-#### 方法3: パスを通す
+#### Method 3: Add to PATH
 
 ```bash
-# ~/.bashrc や ~/.zshrc に追加
+# Add to ~/.bashrc or ~/.zshrc
 export PATH="/path/to/pdf_chapter_splitter/.venv/bin:$PATH"
 
-# その後、任意のディレクトリから実行可能
+# Then executable from any directory
 pdf-chapter-splitter input.pdf
 ```
 
-## 依存関係
+## Dependencies
 
 - Python >= 3.12
 - click >= 8.2.1 (CLI)
-- pypdf >= 4.0.0 (PDF操作)
+- pypdf >= 4.0.0 (PDF operations)
