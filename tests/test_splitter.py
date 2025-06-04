@@ -6,7 +6,7 @@ from pdf_chapter_splitter.splitter import PDFChapterSplitter, split_pdf_chapters
 
 class TestPDFChapterSplitter:
     def test_init(self, tmp_path):
-        """初期化のテスト"""
+        """Test initialization"""
         pdf_path = tmp_path / "test.pdf"
         pdf_path.touch()
         
@@ -17,7 +17,7 @@ class TestPDFChapterSplitter:
         assert splitter.output_dir.exists()
     
     def test_init_with_output_dir(self, tmp_path):
-        """カスタム出力ディレクトリのテスト"""
+        """Test custom output directory"""
         pdf_path = tmp_path / "test.pdf"
         pdf_path.touch()
         output_dir = tmp_path / "custom_output"
@@ -28,42 +28,42 @@ class TestPDFChapterSplitter:
         assert splitter.output_dir.exists()
     
     def test_find_chapter_boundaries(self):
-        """章の境界検出のテスト"""
+        """Test chapter boundary detection"""
         splitter = PDFChapterSplitter("dummy.pdf")
         
         test_text = """
-前文テキスト
+Preface text
 
-第1章 はじめに
-内容1
+Chapter 1 Introduction
+Content 1
 
-第2章 方法
-内容2
+Chapter 2 Methods
+Content 2
 
 Chapter 3 Results
-内容3
+Content 3
 
 1. Introduction
-内容4
+Content 4
         """
         
         boundaries = splitter.find_chapter_boundaries(test_text)
         
-        # 検出された章の数を確認
-        assert len(boundaries) >= 3  # 最低でも3つの章が検出されるはず
+        # Verify number of detected chapters
+        assert len(boundaries) >= 3  # At least 3 chapters should be detected
         
-        # 章のタイトルが含まれているか確認
+        # Verify chapter titles are included
         titles = [title for _, title in boundaries]
-        assert any("第1章" in title for title in titles)
-        assert any("第2章" in title for title in titles)
+        assert any("Chapter 1" in title for title in titles)
+        assert any("Chapter 2" in title for title in titles)
     
     def test_find_chapter_boundaries_no_chapters(self):
-        """章が見つからない場合のテスト"""
+        """Test when no chapters are found"""
         splitter = PDFChapterSplitter("dummy.pdf")
         
         test_text = """
-これは普通のテキストです。
-章の区切りはありません。
+This is normal text.
+There are no chapter breaks.
         """
         
         boundaries = splitter.find_chapter_boundaries(test_text)
@@ -73,8 +73,8 @@ Chapter 3 Results
     @patch('pdf_chapter_splitter.splitter.open', new_callable=mock_open)
     @patch('pypdf.PdfReader')
     def test_extract_text(self, mock_pdf_reader, mock_file):
-        """テキスト抽出のテスト"""
-        # PDFReaderのモックを設定
+        """Test text extraction"""
+        # Set up PDFReader mock
         mock_page1 = Mock()
         mock_page1.extract_text.return_value = "Page 1 text"
         mock_page2 = Mock()
@@ -91,7 +91,7 @@ Chapter 3 Results
         assert "Page 2 text" in text
     
     def test_split_pdf_chapters_function(self):
-        """split_pdf_chapters関数のテスト"""
+        """Test split_pdf_chapters function"""
         with patch.object(PDFChapterSplitter, 'split') as mock_split:
             mock_split.return_value = [Path("00.pdf"), Path("01.pdf")]
             
@@ -104,51 +104,51 @@ Chapter 3 Results
 
 @pytest.fixture
 def sample_pdf_text():
-    """テスト用のサンプルPDFテキスト"""
+    """Sample PDF text for testing"""
     return """
-目次
+Table of Contents
 
-第1章 序論
-1.1 背景
-1.2 目的
+Chapter 1 Introduction
+1.1 Background
+1.2 Objectives
 
-第2章 方法論  
-2.1 データ収集
-2.2 分析手法
+Chapter 2 Methodology
+2.1 Data Collection
+2.2 Analysis Methods
 
-第3章 結果
-3.1 基本統計
-3.2 詳細分析
+Chapter 3 Results
+3.1 Basic Statistics
+3.2 Detailed Analysis
 
-第4章 考察
-4.1 結果の解釈
-4.2 限界
+Chapter 4 Discussion
+4.1 Interpretation of Results
+4.2 Limitations
 
-第5章 結論
-5.1 まとめ
-5.2 今後の課題
+Chapter 5 Conclusion
+5.1 Summary
+5.2 Future Work
     """
 
 
 class TestChapterDetection:
-    """章検出の詳細テスト"""
+    """Detailed chapter detection tests"""
     
     def test_japanese_chapters(self, sample_pdf_text):
-        """日本語の章検出テスト"""
+        """Japanese chapter detection test"""
         splitter = PDFChapterSplitter("dummy.pdf")
         boundaries = splitter.find_chapter_boundaries(sample_pdf_text)
         
-        # 5つの章が検出されることを確認
+        # Verify that 5 chapters are detected
         assert len(boundaries) == 5
         
-        # 各章のタイトルを確認
+        # Verify each chapter title
         titles = [title for _, title in boundaries]
-        assert "第1章 序論" in titles
-        assert "第2章 方法論" in titles
-        assert "第3章 結果" in titles
+        assert "Chapter 1 Introduction" in titles
+        assert "Chapter 2 Methodology" in titles
+        assert "Chapter 3 Results" in titles
     
     def test_english_chapters(self):
-        """英語の章検出テスト"""
+        """English chapter detection test"""
         english_text = """
 Table of Contents
 

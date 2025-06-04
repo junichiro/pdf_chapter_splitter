@@ -1,7 +1,7 @@
 [project]
 name = "pdf-chapter-splitter"
 version = "0.1.0"
-description = "PDFファイルを章ごとに自動分割するツール"
+description = "Tool for automatically splitting PDF files by chapters"
 readme = "README.md"
 authors = [
     { name = "Junichiro Tobe", email = "junichiro.tobe@gmail.com" }

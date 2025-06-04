@@ -11,39 +11,39 @@ class PDFChapterSplitter:
         self.output_dir.mkdir(exist_ok=True)
         
     def extract_text(self) -> str:
-        """PDFからテキストを抽出"""
-        print("pypdf でPDFを読み込み中...")
+        """Extract text from PDF"""
+        print("Loading PDF with pypdf...")
         try:
             with open(self.pdf_path, 'rb') as file:
                 reader = PdfReader(file, strict=False)
-                print(f"PDFページ数: {len(reader.pages)}")
+                print(f"PDF page count: {len(reader.pages)}")
                 text = ""
                 for i, page in enumerate(reader.pages):
                     try:
                         page_text = page.extract_text()
                         text += page_text + "\n"
-                        if i == 0:  # 最初のページの一部を表示
-                            print(f"最初のページのサンプル: {page_text[:200]}...")
+                        if i == 0:  # Display part of the first page
+                            print(f"First page sample: {page_text[:200]}...")
                     except Exception as e:
-                        print(f"警告: ページ {i+1} の読み込みでエラー: {e}")
+                        print(f"Warning: Error loading page {i+1}: {e}")
                         continue
             return text
         except Exception as e:
-            print(f"pypdf でエラー: {e}")
+            print(f"Error with pypdf: {e}")
             raise
     
     def find_chapter_boundaries(self, text: str) -> List[Tuple[int, str]]:
-        """章の境界を見つける（シンプルアプローチ：各章の最初の出現のみ採用）"""
+        """Find chapter boundaries (simple approach: only adopt first occurrence of each chapter)"""
         lines = text.split('\n')
         chapter_boundaries = []
         
-        print("章検出を実行中...")
+        print("Detecting chapters...")
         
-        # 各章番号の最初の出現のみを記録
+        # Record only the first occurrence of each chapter number
         seen_chapters = set()
         
-        # 章のパターン（日本語の章番号のみに特化）
-        chapter_pattern = r'^第?\s*([0-9一二三四五六七八九十]+)\s*章\s*(.*)'
+        # Chapter pattern (specialized for Japanese chapter numbers only)
+        # Chapter pattern
         
         for i, line in enumerate(lines):
             line = line.strip()
@@ -58,55 +58,55 @@ class PDFChapterSplitter:
             chapter_num_str = chapter_match.group(1)
             chapter_title = chapter_match.group(2).strip()
             
-            # 章番号を数字に変換
+            # Convert chapter number to digit
             chapter_num = self._convert_to_number(chapter_num_str)
             if chapter_num is None:
                 continue
             
-            # 1〜15章の範囲内の章のみ
+            # Only chapters within range 1-15
             if chapter_num < 1 or chapter_num > 15:
                 continue
             
-            # 既に見つかった章はスキップ（最初の出現のみを採用）
+            # Skip already found chapters (adopt only first occurrence)
             if chapter_num in seen_chapters:
                 continue
             
-            # 明らかにページヘッダーのものを除外
+            # Exclude obvious page headers
             if self._is_obviously_header(line):
                 continue
             
-            # 真の章開始と判定
+            # Determine as true chapter start
             chapter_boundaries.append((i, line))
             seen_chapters.add(chapter_num)
-            print(f"章 {chapter_num} を検出: 行{i} - {line}")
+            print(f"Detected chapter {chapter_num}: line {i} - {line}")
         
-        # 出現順に並んだまま返す
+        # Return in order of appearance
         return chapter_boundaries
     
     def _find_toc_chapters(self, lines: List[str]) -> List[Tuple[int, str]]:
-        """目次から章リストを抽出"""
+        """Extract chapter list from table of contents"""
         toc_chapters = []
         
-        # 目次らしい部分を探す（最初の300行程度）
+        # Search for table of contents-like sections (first ~300 lines)
         for i, line in enumerate(lines[:300]):
             line = line.strip()
-            # 「X章　タイトル　...　ページ番号」形式を探す
+            # Look for "Chapter X  Title  ...  Page Number" format
             match = re.match(r'^([0-9]+)章\s*(.+?)\s*[ʜ…\.]*\s*([0-9]+)\s*$', line)
             if match:
                 chapter_num = int(match.group(1))
                 title = match.group(2).strip()
-                if len(title) > 5:  # タイトルが十分長い
+                if len(title) > 5:  # Title is sufficiently long
                     toc_chapters.append((chapter_num, title))
         
         return sorted(toc_chapters, key=lambda x: x[0])
     
     def _convert_to_number(self, num_str: str) -> Optional[int]:
-        """章番号を数字に変換"""
-        # 数字の場合
+        """Convert chapter number to digit"""
+        # For numeric case
         if num_str.isdigit():
             return int(num_str)
         
-        # 漢数字の場合
+        # For Chinese numeral case
         kanji_nums = {
             '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
             '六': 6, '七': 7, '八': 8, '九': 9, '十': 10,
@@ -115,36 +115,36 @@ class PDFChapterSplitter:
         return kanji_nums.get(num_str)
     
     def _extract_chapter_number(self, line: str) -> int:
-        """行から章番号を抽出"""
+        """Extract chapter number from line"""
         match = re.match(r'^第?\s*([0-9一二三四五六七八九十]+)\s*章', line)
         if match:
             return self._convert_to_number(match.group(1)) or 0
         return 0
     
     def _is_obviously_header(self, line: str) -> bool:
-        """明らかにページヘッダーかどうかを判定（シンプル版）"""
+        """Determine if obviously a page header (simple version)"""
         
-        # 1. 罫線文字が含まれている（目次や装飾）
+        # 1. Contains line characters (table of contents or decoration)
         if 'ʜ' in line or '…' in line or re.search(r'[\.]{3,}', line):
             return True
         
-        # 2. ページ番号のような数字が末尾にある
+        # 2. Has page number-like digits at the end
         if re.search(r'\s+[0-9]+\s*$', line):
             return True
         
-        # 3. 章番号のみの行は除外
+        # 3. Exclude lines with only chapter numbers
         if re.match(r'^\s*[0-9]+章\s*$', line):
             return True
         
         return False
     
     def _estimate_pages_from_line(self, line_number: int) -> int:
-        """行番号からページ数を推定"""
+        """Estimate page count from line number"""
         try:
             with open(self.pdf_path, 'rb') as file:
                 reader = PdfReader(file, strict=False)
                 
-                # 最初の数ページから1ページあたりの平均行数を計算
+                # Calculate average lines per page from first few pages
                 total_lines = 0
                 pages_to_sample = min(5, len(reader.pages))
                 
@@ -159,20 +159,20 @@ class PDFChapterSplitter:
                 if total_lines > 0:
                     avg_lines_per_page = total_lines / pages_to_sample
                     estimated_page = int(line_number / avg_lines_per_page)
-                    return max(1, estimated_page)  # 最小1ページ
+                    return max(1, estimated_page)  # Minimum 1 page
                 else:
                     return 1
                     
         except Exception as e:
-            print(f"ページ推定エラー: {e}")
+            print(f"Page estimation error: {e}")
             return 1
     
     def get_page_breaks(self) -> List[int]:
-        """各ページの開始行を取得"""
+        """Get starting line for each page"""
         try:
             with open(self.pdf_path, 'rb') as file:
                 reader = PdfReader(file, strict=False)
-                page_breaks = [0]  # 最初のページは0行目から
+                page_breaks = [0]  # First page starts from line 0
                 current_line = 0
                 
                 for i, page in enumerate(reader.pages):
@@ -182,32 +182,32 @@ class PDFChapterSplitter:
                         current_line += page_lines
                         page_breaks.append(current_line)
                     except Exception as e:
-                        print(f"警告: ページ {i+1} の処理でエラー: {e}")
+                        print(f"Warning: Error processing page {i+1}: {e}")
                         page_breaks.append(current_line)
                         
             return page_breaks
         except Exception as e:
-            print(f"ページ分割処理エラー: {e}")
+            print(f"Page splitting process error: {e}")
             raise
     
     def find_chapter_pages(self, chapter_boundaries: List[Tuple[int, str]]) -> List[Tuple[int, int, str]]:
-        """章ごとのページ範囲を計算"""
+        """Calculate page range for each chapter"""
         page_breaks = self.get_page_breaks()
         chapter_pages = []
         
         for i, (line_num, title) in enumerate(chapter_boundaries):
-            # 章の開始ページを見つける（1ページ前にシフト）
+            # Find chapter start page (shift 1 page earlier)
             start_page = 0
             for j, page_break in enumerate(page_breaks):
                 if line_num >= page_break:
                     start_page = j
                 else:
                     break
-            # 最初の章以外は1ページ前にシフト
+            # Shift 1 page earlier except for first chapter
             if start_page > 0:
                 start_page -= 1
             
-            # 次の章の開始ページまたは最終ページを終了ページとする
+            # Set next chapter start page or final page as end page
             if i + 1 < len(chapter_boundaries):
                 next_line_num = chapter_boundaries[i + 1][0]
                 next_start_page = 0
@@ -216,10 +216,10 @@ class PDFChapterSplitter:
                         next_start_page = j
                     else:
                         break
-                # 次の章の開始ページの前のページを現在の章の終了ページとする（1ページ前にシフト）
+                # Set page before next chapter start as current chapter end (shift 1 page earlier)
                 end_page = max(start_page, next_start_page - 2)
             else:
-                # 最後の章の場合は最終ページまで
+                # For last chapter, go to final page
                 with open(self.pdf_path, 'rb') as file:
                     reader = PdfReader(file, strict=False)
                     end_page = len(reader.pages) - 1
@@ -229,95 +229,95 @@ class PDFChapterSplitter:
         return chapter_pages
     
     def split_pdf_by_pages(self, start_page: int, end_page: int, output_filename: str):
-        """指定されたページ範囲でPDFを分割"""
+        """Split PDF by specified page range"""
         try:
             with open(self.pdf_path, 'rb') as input_file:
                 reader = PdfReader(input_file, strict=False)
                 writer = PdfWriter()
                 
-                # 指定範囲のページを追加
+                # Add pages in specified range
                 for page_num in range(start_page, min(end_page + 1, len(reader.pages))):
                     try:
                         writer.add_page(reader.pages[page_num])
                     except Exception as e:
-                        print(f"警告: ページ {page_num+1} の追加でエラー: {e}")
+                        print(f"Warning: Error adding page {page_num+1}: {e}")
                         continue
                 
-                # 出力ファイルに書き込み
+                # Write to output file
                 output_path = self.output_dir / output_filename
                 with open(output_path, 'wb') as output_file:
                     writer.write(output_file)
         except Exception as e:
-            print(f"PDF分割エラー: {e}")
+            print(f"PDF splitting error: {e}")
             raise
                 
         return output_path
     
     def split(self) -> List[Path]:
-        """PDFを章ごとに分割"""
-        print(f"PDFファイル '{self.pdf_path}' を分析中...")
+        """Split PDF by chapters"""
+        print(f"Analyzing PDF file '{self.pdf_path}'...")
         
-        # テキストを抽出
+        # Extract text
         text = self.extract_text()
         
-        # 章の境界を見つける
+        # Find chapter boundaries
         chapter_boundaries = self.find_chapter_boundaries(text)
         
         if not chapter_boundaries:
-            print("章の区切りが見つかりませんでした。全体を1つのファイルとして保存します。")
+            print("No chapter breaks found. Saving entire document as one file.")
             with open(self.pdf_path, 'rb') as file:
                 reader = PdfReader(file, strict=False)
                 last_page = len(reader.pages) - 1
             output_path = self.split_pdf_by_pages(0, last_page, "000.pdf")
             return [output_path]
         
-        print(f"{len(chapter_boundaries)} 個の章が見つかりました:")
+        print(f"Found {len(chapter_boundaries)} chapters:")
         for i, (_, title) in enumerate(chapter_boundaries):
             print(f"  {i:02d}: {title}")
         
-        # 章ごとのページ範囲を計算
+        # Calculate page range for each chapter
         chapter_pages = self.find_chapter_pages(chapter_boundaries)
         
-        # 最初の章より前のコンテンツを000.pdfとして追加
+        # Add content before first chapter as 000.pdf
         if chapter_pages:
             first_chapter_start_page = chapter_pages[0][0]
             if first_chapter_start_page > 0:
-                # 最初の章が0ページ目より後から始まる場合、前のページを000.pdfとする
+                # If first chapter starts after page 0, make previous pages 000.pdf
                 front_matter_end = first_chapter_start_page - 1
-                chapter_pages.insert(0, (0, front_matter_end, "前文・目次"))
-                print(f"前文・目次を000.pdfとして保存します (ページ 1-{front_matter_end + 1})")
+                chapter_pages.insert(0, (0, front_matter_end, "Preface・Table of Contents"))
+                print(f"Saving preface・table of contents as 000.pdf (pages 1-{front_matter_end + 1})")
             else:
-                # 最初の章が0ページから始まる場合、章の実際の開始位置をチェック
+                # If first chapter starts from page 0, check actual chapter start position
                 first_chapter_line = chapter_boundaries[0][0] if chapter_boundaries else 0
                 
-                # 最初の章が相当後の行にある場合（目次や前文がある可能性）
-                if first_chapter_line > 50:  # 50行以降に最初の章がある場合
-                    # より正確なページ分割のため、行番号からページを推定
+                # If first chapter is at a much later line (possibility of table of contents or preface)
+                if first_chapter_line > 50:  # If first chapter is after line 50
+                    # Estimate pages from line numbers for more accurate page splitting
                     estimated_front_matter_pages = self._estimate_pages_from_line(first_chapter_line)
                     if estimated_front_matter_pages > 0:
-                        # 最初の章の開始ページを更新
+                        # Update first chapter start page
                         chapter_pages[0] = (estimated_front_matter_pages, chapter_pages[0][1], chapter_pages[0][2])
-                        # 前文を追加
-                        chapter_pages.insert(0, (0, estimated_front_matter_pages - 1, "前文・目次"))
-                        print(f"推定：前文・目次を000.pdfとして保存します (ページ 1-{estimated_front_matter_pages})")
-        # 章が見つからない場合は既に全体が000.pdfとして処理される
+                        # Add preface
+                        chapter_pages.insert(0, (0, estimated_front_matter_pages - 1, "Preface・Table of Contents"))
+                        print(f"Estimated: Saving preface・table of contents as 000.pdf (pages 1-{estimated_front_matter_pages})")
+        # If no chapters found, entire document is already processed as 000.pdf
 
-        # 各章をPDFファイルに分割
+        # Split each chapter into PDF files
         output_files = []
         for i, (start_page, end_page, title) in enumerate(chapter_pages):
             output_filename = f"{i:03d}.pdf"
             page_count = end_page - start_page + 1
-            print(f"章 {i:02d} (ページ {start_page+1}-{end_page+1}, {page_count}ページ) を '{output_filename}' に保存中...")
-            print(f"  タイトル: {title[:60]}{'...' if len(title) > 60 else ''}")
+            print(f"Saving chapter {i:02d} (pages {start_page+1}-{end_page+1}, {page_count} pages) to '{output_filename}'...")
+            print(f"  Title: {title[:60]}{'...' if len(title) > 60 else ''}")
             
             output_path = self.split_pdf_by_pages(start_page, end_page, output_filename)
             output_files.append(output_path)
         
-        print(f"\n分割完了! {len(output_files)} 個のファイルが '{self.output_dir}' に保存されました。")
+        print(f"\nSplitting complete! {len(output_files)} files saved to '{self.output_dir}'.")
         return output_files
 
 
 def split_pdf_chapters(pdf_path: str, output_dir: Optional[str] = None) -> List[Path]:
-    """PDFを章ごとに分割する関数"""
+    """Function to split PDF by chapters"""
     splitter = PDFChapterSplitter(pdf_path, output_dir)
     return splitter.split()
