@@ -1,17 +1,17 @@
 # PDF Chapter Splitter
 
-PDFファイルを章ごとに自動分割するPythonツールです。
+A Python tool that automatically splits PDF files by chapters.
 
-## 特徴
+## Features
 
-- **自動章検出**: PDFの内容を解析して章の境界を自動的に検出
-- **複数形式対応**: 日本語・英語の様々な章形式に対応
-- **簡単操作**: コマンドライン一つで分割実行
-- **整理された出力**: 000.pdf、001.pdf、002.pdf...の3桁形式で順序付けて保存
+- **Automatic Chapter Detection**: Analyzes PDF content to automatically detect chapter boundaries
+- **Multiple Format Support**: Supports various chapter formats in Japanese and English
+- **Simple Operation**: Split PDFs with a single command line
+- **Organized Output**: Saves files in 3-digit format as 000.pdf, 001.pdf, 002.pdf...
 
-## インストール
+## Installation
 
-### 方法1: uvを使用（推奨）
+### Method 1: Using uv (Recommended)
 
 ```bash
 git clone https://github.com/junichiro/pdf_chapter_splitter.git
@@ -19,7 +19,7 @@ cd pdf_chapter_splitter
 uv sync
 ```
 
-### 方法2: pipを使用
+### Method 2: Using pip
 
 ```bash
 git clone https://github.com/junichiro/pdf_chapter_splitter.git
@@ -27,48 +27,48 @@ cd pdf_chapter_splitter
 pip install -e .
 ```
 
-## 使用方法
+## Usage
 
-### uvでインストールした場合
+### When installed with uv
 
 ```bash
-# 基本的な使用方法
+# Basic usage
 uv run pdf-chapter-splitter input.pdf
 
-# 出力ディレクトリを指定
+# Specify output directory
 uv run pdf-chapter-splitter input.pdf --output-dir ./chapters
 
-# 詳細情報を表示
+# Show detailed information
 uv run pdf-chapter-splitter input.pdf --verbose
 
-# ヘルプを表示
+# Show help
 uv run pdf-chapter-splitter --help
 ```
 
-### pipでインストールした場合
+### When installed with pip
 
 ```bash
-# 基本的な使用方法
+# Basic usage
 pdf-chapter-splitter input.pdf
 
-# 出力ディレクトリを指定
+# Specify output directory
 pdf-chapter-splitter input.pdf --output-dir ./chapters
 
-# 詳細情報を表示
+# Show detailed information
 pdf-chapter-splitter input.pdf --verbose
 
-# ヘルプを表示
+# Show help
 pdf-chapter-splitter --help
 ```
 
-### 実行例
+### Usage Examples
 
 ```bash
-# プロジェクトディレクトリで実行
+# Run in project directory
 cd pdf_chapter_splitter
 uv run pdf-chapter-splitter sample.pdf
 
-# 別のディレクトリから実行
+# Run from another directory
 uv run --directory /path/to/pdf_chapter_splitter pdf-chapter-splitter ~/Documents/book.pdf --output-dir ~/Desktop/chapters
 ```
 
